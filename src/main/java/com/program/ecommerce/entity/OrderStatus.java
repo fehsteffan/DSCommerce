@@ -1,4 +1,4 @@
-package com.program.ecommerce;
+package com.program.ecommerce.entity;
 
 public enum OrderStatus {
 	
