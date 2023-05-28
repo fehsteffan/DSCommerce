@@ -51,6 +51,14 @@ public class ProductService {
 		
 				
 	}
+	
+	
+	@Transactional
+	public void delete(Long id) {
+		productRepository.deleteById(id);
+				
+	}
+	
 
 
 	@Transactional
@@ -60,7 +68,8 @@ public class ProductService {
 		entity.setPrice(dto.getPrice());
 		entity.setImgUrl(dto.getImgUrl());
 		
-	}		
+	}
+	
 		
 }
 
