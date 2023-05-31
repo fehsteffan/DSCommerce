@@ -1,14 +1,21 @@
 package com.program.ecommerce.services;
 
+import javax.persistence.EntityNotFoundException;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.program.ecommerce.dto.ProductDTO;
 import com.program.ecommerce.entity.Product;
 import com.program.ecommerce.repositories.ProductRepository;
+import com.program.ecommerce.services.exceptions.DataBaseException;
+import com.program.ecommerce.services.exceptions.ResourceNotFoundException;
 
 @Service
 public class ProductService {
@@ -27,7 +34,7 @@ public class ProductService {
 
 	@Transactional(readOnly = true)
 	public ProductDTO findById(Long id) {		
-		Product product = productRepository.findById(id).get();
+		Product product = productRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Recurso nao encontrado"));
 		return new ProductDTO(product);
 		
 		
@@ -44,19 +51,37 @@ public class ProductService {
 	
 	@Transactional
 	public ProductDTO update(Long id, ProductDTO dto) {
-		Product entity = productRepository.getReferenceById(id);		
-		copyDtoToEntity(dto, entity);		
-		entity = productRepository.save(entity);		
-		return new ProductDTO(entity);	
+		
+		try {
+			Product entity = productRepository.getReferenceById(id);		
+		    copyDtoToEntity(dto, entity);		
+		    entity = productRepository.save(entity);		
+		    return new ProductDTO(entity);	
+			
+		} catch (EntityNotFoundException e) {
+			throw new ResourceNotFoundException("Recurso nao encontrado");
+		}
+		
 		
 				
 	}
 	
 	
-	@Transactional
+	@Transactional(propagation = Propagation.SUPPORTS)
 	public void delete(Long id) {
-		productRepository.deleteById(id);
-				
+		
+		try {			
+			productRepository.deleteById(id);
+		
+		}
+		catch (EmptyResultDataAccessException e) {
+			throw new ResourceNotFoundException("Recurso nao encontrado");
+		}
+		
+		catch (DataIntegrityViolationException e) {
+			throw new DataBaseException("Falha de integridade referencial");
+			
+		}
 	}
 	
 
